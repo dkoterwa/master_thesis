@@ -1,0 +1,139 @@
+\documentclass[12pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, left=3cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{svg}
+
+\doublespacing
+
+%\usepackage{biblatex} %Imports biblatex package
+\usepackage[sort&compress]{natbib}
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+\usepackage{amsmath}
+\bibliographystyle{plain} % Or another suitable style
+ % No need to include the .bib extension
+
+%\addbibresource{references.bib} %Import the bibliography file
+
+% For adding hyperlinks to your document (e.g., in the table of contents)
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
+\title{Your Master Thesis Title}
+\author{Your Name}
+\date{Month Year}
+
+\begin{document}
+
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+        
+        \Huge
+        \textbf{Your Master Thesis Title}
+        
+        \vspace{0.5cm}
+        \LARGE
+        Subtitle or Research Question
+        
+        \vspace{1.5cm}
+        
+        \textbf{Your Name}
+        
+        \vfill
+        
+        A thesis presented for the degree of\\
+        Master of Science
+        
+        \vspace{0.8cm}
+        
+
+        
+        \Large
+        Department Name\\
+        University Name\\
+        Country\\
+        Month Year
+        
+    \end{center}
+\end{titlepage}
+
+\pagenumbering{roman}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+\clearpage
+\pagenumbering{arabic}
+
+\chapter{Introduction}
+\label{chapter:introduction}
+
+\chapter{Literature Review}
+\label{chapter:literature_review}
+
+\chapter{Methodology}
+\label{chapter:methodology}
+The goal of this research is to verify the thesis that retrieval method is a safe AI text detection tool. We do not focus on measuring the accuracy of verifying if a sequence was artificially generated, but rather concentrating on human and whether people will be harmed in the whole process by falsely labeling the text they created as generated. Developing effective mechanisms for identifying AI-generated content, resistant to methods like paraphrasing, is essential. Simultaneously, ensuring safety of human-beings must be given equal priority. Incorrectly classifying a person's original work can be very damaging and serious in its consequences. For example, a student found to be a cheater is in a position to fail the class, despite the fact that he did his work independently. It is significant to include information about False Positive Rate (classifying human written text as AI-generated) in the research about AI detectors. Some of recent works \citep{krishna2023paraphrasing, yang2023dnagpt} document the quality of their solutions at a fixed 1\% FPR. In this thesis, we are planning to test various versions of specific elements of retrieval based AI text detection tool and report FPR metric for each experiment. \newline \newline               
+An additional contribution of this work is measuring safety of retrieval-based method in multilingual environment. We can notice that tools dependent on chatbots, such as \cite{ChatGPT}, are used by people from all over the world. Taking this fact into consideration, it is needed to report the performance of the AI written text detectors calculated on sequences from multiple languages. This is why in this work we are going to measure False Positive Rate level of retrieval-based system on datasets consisting texts from 6 languages (Arabic, Chinese, English, German, Spanish, and Vietnamese). Since this specific AI detection tool is based on encoding text with model of choice, usually black box\footnote{Black box models are algorithms with an enormous amount of weights which makes it difficult to interpret and explain its decision-making process.} ones, it would be beneficial to see if these multilingual encoding models are robust in this setting, this type of studies are not present in current research about retrieval-based AI detection systems.
+\newline \newline
+As mentioned before, we are not going to build a multilingual retrieval system which will ensure high performance while maintaining low FPR score. It is mainly caused by the computational limitations. It would be needed to stress this kind of system with paraphrase attacks but we were not able to find a high quality paraphrasing model or ready to apply valuable multilingual datasets with paraphrases. PAWS-X \cite{yang2019paws} was analyzed in terms of applying those attacks, however, paraphrases in this dataset are too similar to the original sentences. For example, in many cases exactly the same words are used to formulated an original sentence and its paraphrase. It does not resemble a real-life scenario. We leave building an accurate paraphrasing model or highly diverse multilingual dataset with paraphrases for further research. We are going to focus on testing safety of retrieval based system by replacing its individual elements. Additionally, as in recent research \cite{krishna2023paraphrasing}, an effect of database extension to millions of generations is going to be measured. It may happen that after increasing the database and at the same time expanding the topics of generations, this system will lose its quality in a multilingual environment and record higher values of FPR.
+\newline \newline
+Retrieval based AI detection system is based on multiple components. It assumes that the provider of the chatbot stores all the generations of the model in a specific database. In the moment when we want to verify if a certain sequence was artificially generated an encoded representation of it is created by an encoder model, usually by producing so-called embedding. Embedding is a high-dimensional numerical vector which represents the data. Research on how to build this vectors has been carried out for many years. Some works studied Continous Skip-gram Model \citep{mikolov2013distributed, mikolov2013efficient}, where we receive the embedding by extracting weights of the model trained on the task about predicting surrounding words given a current word in the sentence. Research on creating word representations by analyzing their co-occurences \cite{pennington-etal-2014-glove} has also been conducted. However, aforementioned works do not consider situations when the context of word changes. For example, the word "bow" will have different meaning in the sentence "She grabbed her bow and started shooting." than in the statement "I think the bow will look nice on this gift.". Later research took it into consideration and proposed so called \textit{Contextualized Word Embeddings} \citep{schuster2019crosslingualcontextualembeddings, peters2018deepcontextualizedembeddings}, where we treat the whole sentence as an input to the model and produce word encodings based on its surroundings. In retrieval AI text detection system, a sequence embedding can be computed in various ways, but it is usually an output of Transformer-based model \cite{vaswani2023attention}. Next step is to produce contextualized representations for all of the generations from the database constructed by the service provider. A common approach is to encode these earlier and store in a vector database. As a result, we do not have to calculate embeddings during every retrieval, this process significantly improves the execution time of the solution. Then, the similarities between our tested sequence and all of the entries of database are calculated. If the metric value is extremely high e.g. Cosine similarity above 0.9), we label the sequence as AI generated. Measuring similarity metric between our query sequence and all of the entries in the database in non-optimized manner is a huge computational overhead. If we assume that our index counts 10 million observations, we would have to compute exactly $10^{6}$ of similarities which makes this method too slow to even consider it as a proper solution of AI detection problem. However, efficient search systems based on nearest neighbors algorithm have been developed in recent years \citep{FAISS, NSLM}. An interpretable diagram presenting how the retrieval system works is presented in Figure \ref{fig:retrieval}.
+\newline\newline
+\begin{figure}[htp]
+    \centering
+    \includesvg[width=\textwidth,height=\textheight,keepaspectratio]{images/retrieval_diagram.svg}
+    \caption{An overview of the retrieval based AI generated text detection system. Embeddings of all the sequences generated by the system are stored in the vector database. An embedding of tested text is compared with every observation in the index. If there is an extremely high similarity between any sequence in the index and tested sequence, we classify it as artificially generated.}
+    \label{fig:retrieval}
+\end{figure}
+\newline \newline
+Transformer architecture \cite{vaswani2023attention} is based on a stack of encoders and decoders. Encoder maps a sequence of symbol representations ($x_1$,...,$x_n$) into a continuous representation z=($z_1$,...,$z_n$). Decoder is using z in order to generate an output sequence ($y_1$,...,$y_n$). Transformer is an auto-regressive model, which means that it generates one element of output sequence at a time. The most important element of the architecture is an attention mechanism. It has been used in previous years along with recurrent networks \citep{bahdanau2016neural, kim2017structured}, however Transformer is built solely on this mechanism which is called Scaled Dot-Product Attention in the original article. It relies on utilizing three separate matrices: Query, Keys, and Values, all of dimension $d_k$. During training, attention enables to teach the model which words of representation ($x_1$,...,$x_n$) are important while trying to predict word $x_{n+1}$ by computing attention weights. Matrix of scores is calculated as:
+\newline 
+ \begin{equation}
+    \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\end{equation}
+\newline
+Another contribution of this work is the comparison between classic Transformers and Sentence Transformers \cite{sentencebert} in terms of quality. Latter differs from the former by an additional stage of fine-tuning with Contrastive Learning. Contrastive Learning is performed in order to bring semantically similar embeddings closer in the vector space, and increasing the distance between those differing at the same time. Multiple works highlighted the problem of anisotropy of pre-trained Transformer-based models \citep{clustersmanifolds, ethayarajh2019contextual, rajaee2021clusterbased}. It is characterized by non-uniformly distributed representations in the vector space, Contrastive Learning is a tool to limit this problem. The models used in the testing phase are described in the next paragraph.
+\newline \newline
+Multilingual Universal Sentence Encoders \cite{universal_sentence_encoder} is a group of models trained on multiple datasets by sharing an encoder. Training data consists of question answering, translation, and Natural Language Inference. This process is performed in order to build the model capable of producing semantically rich embeddings. In this work, we are using a distilled version of the Transformer model from Multilingual Universal Sentence Encoders. It allows us to conduct our experiments because it has an extended list of supported languages, including those from our test datasets.
+\newline \newline
+MiniLM \cite{wang2020minilm} is a model designed to reduce the computational overhead of large pre-trained Transformer-based models, without significantly compromising their performance on natural language processing tasks. This approach involves a technique known as deep self-attention distillation, where a smaller model, referred to as the student, is trained to emulate the self-attention mechanisms of the larger, teacher model. Distillation is focused on the last layer of the Transformer architecture which saves significant amount of computation. This article additionally introduces a novel aspect of knowledge distillation by incorporating the scaled dot-product of the values within the self-attention module, augmenting the traditional focus on attention distributions derived from queries and keys. MiniLM leverages the concept of a teacher assistant to enhance the distillation process. In this work, we are using a version of MiniLM trained on parallel data for more than 50 languages.
+\newline \newline
+MPNet \cite{song2020mpnet} is a novel pre-training method connecting the benefits of Masked Language Modeling used in BERT \cite{devlin2019bert} and Permuted Language Modeling from XLNet architecture \cite{yang2020xlnet}. It outperforms aforementioned models thanks to its training objective. We have decided to use its multilingual version which is additionally trained in the same manner as Sentence Bert by utilizing Contrastive Learning.
+\newline \newline
+LaBSE \cite{labse} stands for Language-agnostic BERT Sentence Embedding. This model is designed to create multilingual embeddings which can be semantically compared in an accurate way. For example, if we will encode English sentence "I was running in a park today." and its Spannish translation "Hoy estaba corriendo en un parque.", we will notice that embeddings of these two sequences are near each other in the vector space. LaBSE combines Masked Language Modeling \cite{devlin2019bert} with Translation Language Modeling \cite{lample2019crosslingual}. Furthermore, it utilizes dual encoder model in order to bring an original sentence closer to its translations in the vector space by performing translation ranking task and minimizing given loss function:
+\begin{equation}
+\mathcal{L} = -\frac{1}{N} \sum_{i=1}^{N} \log \frac{e^{\phi(x_i; y_i)}}{e^{\phi(x_i; y_i)} + \sum_{n=1, n \neq i}^{N} e^{\phi(x_i; y_n)}} 
+\end{equation}
+\newline
+Similarity of x and why is given by $\phi(x_i; y_i)$. Usually $\phi(x_i; y_i) = xy^T$. Desired situation is when the translation of our original phrase will be ranked above all of the negative samples in the batch.
+\newline \newline
+First architecture which is not a Sentence Transformer and which we are going to compare with this group of models is BERT \cite{devlin2019bert}. BERT uses the encoder part of classic Transformer architecture to understand the context of a word in a sentence bidirectionally. It is pre-trained on a large corpus using tasks like Masked Language Modeling and Next Sentence Prediction, and can be fine-tuned to tackle various domain-specific problems . BERT's key innovation is its contextual word embeddings which represent words based on their context making it effective for diverse NLP applications. In our work we utilize the multilingual version of BERT.
+\newline \newline
+XLM-R \cite{xlm-r} extends the BERT research by designing a solution which understands and processes multiple languages. The training of XLM-R on a diverse multilingual corpus allows it to achieve high cross-lingual performance, making it effective for applications where a single model is required to handle multiple languages with decent accuracy. This research also points out so called \textit {curse of multilinguality}, a situation in which adding more languages to the training data leads to better cross-lingual performance on low-resource languages but only to a specific point, after reaching this ceiling the quality decreases. Another interesting aspect of this work is providing a measure of the trade-off between high-resource and low-resource languages as well as the effect of language sampling and size of the vocabulary.
+
+\chapter{Results}
+\label{chapter:results}
+
+
+\chapter{Conclusion}
+\label{chapter:conclusion}
+
+
+\bibliography{references}
+
+\appendix
+
+
+\end{document}
+
