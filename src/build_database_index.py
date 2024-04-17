@@ -1,7 +1,13 @@
 from transformers import AutoModel, AutoTokenizer
 import torch
-from typing import List
-
+import torch.nn.functional as F
+import faiss
+from faiss import write_index, read_index
+import numpy as np
+from typing import List, Tuple
+from utils import TextDataset
+from torch.utils.data import DataLoader
+import argparse
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 #we want to take a model, then download and concatenate all of the datasets and embed them, after embedding we pack it into faiss index and store
@@ -26,14 +32,14 @@ class Model:
         self.embedding_model, self.tokenizer = self._load_model_and_tokenizer()
         self.pooling = Pooling(pooling_type)
     
-    def _load_model_and_tokenizer(self):
+    def _load_model_and_tokenizer(self) ->Tuple[AutoModel, AutoTokenizer]:
         return AutoModel.from_pretrained(self.hf_name), AutoTokenizer.from_pretrained(self.hf_name)
     
-    def tokenize_and_produce_model_output(self, data: List[str]):
+    def tokenize_and_produce_model_output(self, data: List[str]) -> np.ndarray:
         encoded_input = self.tokenizer(data, 
                                        padding="max_length", 
                                        truncation=True, 
-                                       max_length=128, 
+                                       max_length=256, 
                                        return_tensors="pt"
                                        )
         attention_mask = encoded_input["attention_mask"].to(DEVICE)
@@ -43,12 +49,37 @@ class Model:
                                           attention_mask=attention_mask, 
                                           output_hidden_states=True)
             pooled_output = self.pooling(output, attention_mask)
-        return pooled_output
+            normalized_output = F.normalize(pooled_output, p=2, dim=1)
+        return normalized_output.numpy()
+
+def run(args: argparse.Namespace) -> None:
+    model = Model(args.model_name, args.pooling_type)
+    dataset = TextDataset()
+    dataset.get_default_data()
+    dataloader = DataLoader(dataset, batch_size=256, shuffle=False)
+    database_embeddings = []
+    
+    for batch in dataloader:
+        output = model.tokenize_and_produce_model_output(batch)
+        database_embeddings.extend(output)
+        
+    embeddings_array = np.array(database_embeddings)
+    dim = embeddings_array.shape[1]
+    index = faiss.IndexFlatIP(dim) 
+    index.add(embeddings_array)
+    write_index(index, f"{args.index_output_dir}/{args.model_name.split('/')[1]}.index")
+    
     
 if __name__ == "__main__":
-    model = Model("sentence-transformers/distiluse-base-multilingual-cased-v2", "mean")
-    test = ["I would like to order some pizza", "I do not know"]
-    pooled_output = model.tokenize_and_produce_model_output(test)
-    print(pooled_output.shape)
-        
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model_name", type=str, required=True)
+    parser.add_argument("--pooling_type", type=str, default="cls")
+    parser.add_argument("--index_output_dir", type=str, default="../data/faiss_indexes")
+    args = parser.parse_args()
+    run(args)
+    #TO DO: preprocess datasets forming the database, because now they have different structures
+
+    
+    
+    
         
