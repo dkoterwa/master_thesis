@@ -10,7 +10,7 @@ DATABASE_DATASETS_MAPPING = {"FreedomIntelligence/alpaca-gpt4-deutsch": "convers
                              "FreedomIntelligence/alpaca-gpt4-chinese": "conversations",
                              "FreedomIntelligence/alpaca-gpt4-arabic": "conversations",
                              "5CD-AI/Vietnamese-c-s-ale-alpaca-gpt4-data-gg-translated": "output_vi",
-                             "vicgalle/alpaca-gpt4": "text",
+                             "vicgalle/alpaca-gpt4": "output",
                              "MBZUAI/LaMini-instruction": "response",
                              }
 DATABASE_PATH = "../data/database.pkl"
