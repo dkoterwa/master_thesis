@@ -5,12 +5,13 @@ import numpy as np
 from utils import TextDataset, Model
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import os
 
 def run(args: argparse.Namespace) -> None:
     model = Model(args.model_name, args.pooling_type)
     dataset = TextDataset()
     dataset.build_database()
-    dataloader = DataLoader(dataset, batch_size=256, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=512, shuffle=False)
     database_embeddings = []
     
     for batch in tqdm(dataloader, desc="Calculating embeddings of the database observations"):
@@ -21,6 +22,7 @@ def run(args: argparse.Namespace) -> None:
     dim = embeddings_array.shape[1]
     index = faiss.IndexFlatIP(dim) 
     index.add(embeddings_array)
+    os.makedirs(args.index_output_dir, exist_ok=True)
     write_index(index, f"{args.index_output_dir}/{args.model_name.split('/')[1]}.index")
     
     

@@ -37,11 +37,11 @@ class TextDataset(Dataset):
         total_num_of_observations = 0
         for dataset, text_column in DATABASE_DATASETS_MAPPING.items():
             df = load_dataset(dataset, split="train").to_pandas() #all default datasets only have train split
-            total_num_of_observations += len(df)
             texts = df[text_column].to_list()
             full_data.extend(texts)
             total_num_of_observations += len(texts)
-        assert(total_num_of_observations == len(full_data)), "Not all of the observations from datasets picked for database have been correctly added to the final DataFrame"
+            
+        assert total_num_of_observations == len(full_data), "Not all of the observations from datasets picked for database have been correctly added to the final DataFrame"
         self.texts = full_data
 
     def build_database(self) -> None:
@@ -50,6 +50,7 @@ class TextDataset(Dataset):
             database = pd.read_pickle(DATABASE_PATH)
             self.texts = database[DATABASE_TEXT_COLUMN]
         else:
+            print("Building database")
             self._get_default_data()  
             database_df = pd.DataFrame({"id": range(1, len(self.texts) + 1), DATABASE_TEXT_COLUMN: self.texts})
             database_df.to_pickle(DATABASE_PATH)
@@ -86,10 +87,11 @@ class Model:
                                        )
         attention_mask = encoded_input["attention_mask"].to(DEVICE)
         input_ids = encoded_input["input_ids"].to(DEVICE)
+        self.embedding_model.to(DEVICE)
         with torch.no_grad():
             output = self.embedding_model(input_ids=input_ids, 
                                           attention_mask=attention_mask, 
                                           output_hidden_states=True)
             pooled_output = self.pooling(output, attention_mask)
             normalized_output = F.normalize(pooled_output, p=2, dim=1)
-        return normalized_output.numpy()
+        return normalized_output.cpu().numpy()
