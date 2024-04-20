@@ -7,6 +7,7 @@ from utils import TextDataset, Model
 from typing import List
 from tqdm import tqdm
 from datasets import load_dataset
+
 EMBEDDINGS_SAVE_PATH = "../data/test_embeddings"
 
 def save_embeddings(embeddings_array: List[np.ndarray], dataset_name:str, model_name: str, output_dir: str=EMBEDDINGS_SAVE_PATH) -> None:
@@ -36,6 +37,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", help="HuggingFace name of the model", type=str, required=True)
     parser.add_argument("--pooling_type", type=str, default="cls")
     parser.add_argument("--text_column_name", type=str, default="answer")
+    parser.add_argument("--language_column_name", type=str, default="lang")
     parser.add_argument("--embeddings_output_dir", type=str, default=EMBEDDINGS_SAVE_PATH)
     args = parser.parse_args()
     run(args)
