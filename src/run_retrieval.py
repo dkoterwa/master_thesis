@@ -18,23 +18,25 @@ def run(args):
     database_df = pd.read_pickle(DATABASE_PATH)
     test_df = load_dataset(args.dataset_name, split="train").to_pandas()
     test_embeddings = np.load(args.test_embeddings_path, allow_pickle=True)
-    
     nearest_neighbors_texts = []
     nearest_neighbors_scores = []
-    for candidate in tqdm(test_embeddings[:10], desc="Retrieving nearest neighbors from index for test embeddings"):
+    nearest_neighbor_langs = []
+    
+    for candidate in tqdm(test_embeddings, desc="Retrieving nearest neighbors from index for test embeddings"):
         scores, indices = find_neighbors_in_index(np.expand_dims(candidate, axis=0), database_index, k=1)
         nearest_neighbor_text = database_df.iloc[indices.item()]["text"]
+        nearest_neighbor_lang = database_df.iloc[indices.item()]["lang"]
         nearest_neighbors_texts.append(nearest_neighbor_text)
         nearest_neighbors_scores.append(scores.item())
-    temp_df = test_df.iloc[:10]
-    temp_df["nearest_neighbor_text"] = nearest_neighbors_texts
-    temp_df["nearest_neighbor_score"] = nearest_neighbors_scores
-    # test_df["nearest_neighbor_text"] = nearest_neighbors_texts
-    # test_df["nearest_neighbor_score"] = nearest_neighbors_scores
+        nearest_neighbor_langs.append(nearest_neighbor_lang)
+        
+    test_df["nearest_neighbor_text"] = nearest_neighbors_texts
+    test_df["nearest_neighbor_score"] = nearest_neighbors_scores
+    test_df["nearest_neighbor_lang"] = nearest_neighbor_langs
     dataset_name = args.dataset_name.split("/")[1]
     model_name = args.model_name.split("/")[1]
     os.makedirs(RETRIEVAL_RESULTS_PATH, exist_ok=True)
-    temp_df.to_csv(f"{RETRIEVAL_RESULTS_PATH}/{dataset_name}_{model_name}.csv")
+    test_df.to_csv(f"{RETRIEVAL_RESULTS_PATH}/{dataset_name}_{model_name}.csv")
     
     
 
