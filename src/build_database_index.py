@@ -7,10 +7,26 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
 
+MODELS = [
+    "sentence-transformers/distiluse-base-multilingual-cased-v2", 
+    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+    "sentence-transformers/LaBSE",
+    "google-bert/bert-base-multilingual-cased",
+    "FacebookAI/xlm-roberta-base"
+    ]
+
+class arguments:
+    def __init__(self, model_name, pooling_type, index_output_dir):
+        self.model_name = model_name
+        self.pooling_type = pooling_type
+        self.index_output_dir = index_output_dir
+        
 def run(args: argparse.Namespace) -> None:
     model = Model(args.model_name, args.pooling_type)
     dataset = TextDataset()
     dataset.build_database()
+    print(f"Size of the database: {len(dataset)}")
     dataloader = DataLoader(dataset, batch_size=512, shuffle=False)
     database_embeddings = []
     
@@ -27,12 +43,15 @@ def run(args: argparse.Namespace) -> None:
     
     
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, required=True)
-    parser.add_argument("--pooling_type", type=str, default="cls")
-    parser.add_argument("--index_output_dir", type=str, default="../data/faiss_indexes")
-    args = parser.parse_args()
-    run(args)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("--model_name", type=str, required=True)
+    # parser.add_argument("--pooling_type", type=str, default="cls")
+    # parser.add_argument("--index_output_dir", type=str, default="../data/faiss_indexes")
+    # args = parser.parse_args()
+    for model in MODELS:
+        print(f"building for model {model}")
+        args = arguments(model_name=model, pooling_type="cls", index_output_dir="../data/faiss_indexes")   
+        run(args)
 
     
     

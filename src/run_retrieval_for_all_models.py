@@ -47,7 +47,7 @@ def run(args):
     logging.info("Test embeddings loaded")
     nearest_neighbors_texts = []
     nearest_neighbors_scores = []
-    nearest_neighbor_langs = []
+    nearest_neighbors_langs = []
 
     logging.info(f"Running retrieval for {args.model_name} model and {args.dataset_name.split('/')[1]} dataset")    
     for batch in tqdm(dataloader ,desc="Retrieving nearest neighbors from index for test embeddings"):
@@ -58,17 +58,16 @@ def run(args):
         nearest_neighbor_lang = database_df.iloc[flat_indices]["lang"]
         nearest_neighbors_texts.extend(nearest_neighbor_text.tolist())
         nearest_neighbors_scores.extend(flat_scores)
-        nearest_neighbor_langs.extend(nearest_neighbor_lang.tolist())
+        nearest_neighbors_langs.extend(nearest_neighbor_lang.tolist())
     
-    logging.info("Finished retrieving neighbors from index")        
-    test_df["nearest_neighbor_text"] = nearest_neighbor_text
-    test_df["nearest_neighbor_score"] = flat_scores
-    test_df["nearest_neighbor_lang"] = nearest_neighbor_lang     
+    logging.info("Finished retrieving neighbors from index")      
+    test_df["nearest_neighbor_text"] = nearest_neighbors_texts
+    test_df["nearest_neighbor_score"] = nearest_neighbors_scores
+    test_df["nearest_neighbor_lang"] = nearest_neighbors_langs   
     
     dataset_name = args.dataset_name.split("/")[1]
-    model_name = args.model_name.split("/")[1]
     os.makedirs(RETRIEVAL_RESULTS_PATH, exist_ok=True)
-    test_df.to_csv(f"{RETRIEVAL_RESULTS_PATH}/{dataset_name}_{model_name}.csv")
+    test_df.to_csv(f"{RETRIEVAL_RESULTS_PATH}/{dataset_name}_{args.model_name}.csv")
     logging.info(f"Saved CSV file with results for {model_name} model and {dataset_name} dataset")
     
 if __name__ == "__main__":
