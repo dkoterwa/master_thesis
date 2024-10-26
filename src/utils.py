@@ -9,11 +9,26 @@ import torch
 import torch.nn.functional as F
 from typing import List, Tuple
 
-#all of these datasets only have train split on HF
-
 DATABASE_PATH = "../data/database.pkl"
 DATABASE_TEXT_COLUMN = "text"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+MODELS_TO_TEST = [
+    "sentence-transformers/distiluse-base-multilingual-cased-v2", 
+    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+    "sentence-transformers/LaBSE",
+    "google-bert/bert-base-multilingual-cased",
+    "FacebookAI/xlm-roberta-base",
+    "intfloat/multilingual-e5-base",
+    "jinaai/jina-embeddings-v3",
+    "Alibaba-NLP/gte-multilingual-base",
+    "BAAI/bge-m3"
+    ]
+
+DATASETS_TO_TEST = ["dkoterwa/mkqa_filtered",
+                    "dkoterwa/mlqa_filtered",
+                    "dkoterwa/oasst2_filtered"]
 
 class TextDataset(Dataset):
     def __init__(self, texts = None):

@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import argparse
 import os
 from torch.utils.data import DataLoader
@@ -9,6 +8,7 @@ from tqdm import tqdm
 from datasets import load_dataset
 
 EMBEDDINGS_SAVE_PATH = "../data/test_embeddings"
+BATCH_SIZE = 2048
 
 def save_embeddings(embeddings_array: List[np.ndarray], dataset_name:str, model_name: str, output_dir: str=EMBEDDINGS_SAVE_PATH) -> None:
     dataset_name = dataset_name.split("/")[1]
@@ -20,7 +20,7 @@ def run(args: argparse.ArgumentParser) -> None:
     model = Model(args.model_name, args.pooling_type)
     data = load_dataset(args.dataset_name, split="train").to_pandas()
     dataset = TextDataset(data[args.text_column_name])
-    dataloader = DataLoader(dataset, batch_size=512, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
     test_embeddings = []
     
     for batch in tqdm(dataloader, desc=f"Calculating embeddings of {args.dataset_name} test dataset"):

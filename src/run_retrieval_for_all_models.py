@@ -7,21 +7,12 @@ from datasets import load_dataset
 from faiss import read_index
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from utils import DATABASE_PATH, EmbeddingsDataset
+from utils import DATABASE_PATH, EmbeddingsDataset, MODELS_TO_TEST, DATASETS_TO_TEST
 logging.basicConfig(filename="retrieval.log", filemode="w", level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 RETRIEVAL_RESULTS_PATH = "../data/retrieval_results"
+BATCH_SIZE=2048
 
-MODELS_TO_TEST = ["distiluse-base-multilingual-cased-v2",
-                  "paraphrase-multilingual-MiniLM-L12-v2", 
-                  "paraphrase-multilingual-mpnet-base-v2", 
-                  "LaBSE",
-                  "bert-base-multilingual-cased",
-                  "xlm-roberta-base"]
-
-DATASETS_TO_TEST = ["dkoterwa/mkqa_filtered",
-                    "dkoterwa/mlqa_filtered",
-                    "dkoterwa/oasst2_filtered"]
 
 class args:
     def __init__(self, model_name, dataset_name, index_path, test_embeddings_path):
@@ -43,7 +34,7 @@ def run(args):
     logging.info("Test dataset loaded")
     test_embeddings = np.load(args.test_embeddings_path, allow_pickle=True)
     dataset = EmbeddingsDataset(test_embeddings)
-    dataloader = DataLoader(dataset, batch_size=256, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
     logging.info("Test embeddings loaded")
     nearest_neighbors_texts = []
     nearest_neighbors_scores = []

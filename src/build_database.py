@@ -1,6 +1,7 @@
 import pandas as pd
 from datasets import load_dataset
 import jieba
+import os
 
 DATASETS = [
             {"name": "nomic-ai/gpt4all-j-prompt-generations", "answer_column": "response", "lang": "en"}, 
@@ -21,22 +22,23 @@ DATASETS = [
 DATABASE_PATH = "../data/database.pkl"
 
 def main():
-    n_of_observations = 0
     dfs = []
+    n_of_observations = 0
     for dataset in DATASETS:
         df = load_dataset(dataset["name"], split="train").to_pandas()
         if dataset["name"] == "MBZUAI/LaMini-instruction":
             df = df[df["instruction_source"].str.contains("generated") | df["instruction_source"].str.contains("self_instruct")]
-        n_of_observations += df.shape[0]
         texts = df[dataset["answer_column"]]
+        n_of_observations += len(texts)
         temp_df = pd.DataFrame({"text": texts, "lang": dataset["lang"]})
         dfs.append(temp_df)
-        
-    full_database = pd.concat(dfs)
-    assert len(full_database) == len(texts), "Length of the database is not equal to the sum of observations calculated during the loop"
     
+    full_database = pd.concat(dfs)
+    assert len(full_database) == n_of_observations, "Length of the database is not equal to the sum of observations calculated during the loop"
     full_database.drop_duplicates("text", inplace=True)
     full_database.reset_index(drop=True, inplace=True)
+    print(f"Database size: {len(full_database)}")
+    os.makedirs("../data", exist_ok=True)
     full_database.to_pickle(DATABASE_PATH)
     
 if __name__ == "__main__":
