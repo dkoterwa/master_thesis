@@ -21,7 +21,6 @@ MODELS_TO_TEST = [
     "google-bert/bert-base-multilingual-cased",
     "FacebookAI/xlm-roberta-base",
     "intfloat/multilingual-e5-base",
-    "jinaai/jina-embeddings-v3",
     "Alibaba-NLP/gte-multilingual-base",
     "BAAI/bge-m3"
     ]
@@ -79,10 +78,12 @@ class Model:
     def __init__(self, hf_name: str, pooling_type: str) -> None:
         self.hf_name = hf_name
         self.embedding_model, self.tokenizer = self._load_model_and_tokenizer()
+        self.embedding_model.to(DEVICE)
+        self.embedding_model.config.use_flash_attention = False
         self.pooling = Pooling(pooling_type)
     
     def _load_model_and_tokenizer(self) ->Tuple[AutoModel, AutoTokenizer]:
-        return AutoModel.from_pretrained(self.hf_name), AutoTokenizer.from_pretrained(self.hf_name)
+        return AutoModel.from_pretrained(self.hf_name, trust_remote_code=True), AutoTokenizer.from_pretrained(self.hf_name, trust_remote_code=True)
     
     def tokenize_and_produce_model_output(self, data: List[str]) -> np.ndarray:
         encoded_input = self.tokenizer(data, 
@@ -93,7 +94,7 @@ class Model:
                                        )
         attention_mask = encoded_input["attention_mask"].to(DEVICE)
         input_ids = encoded_input["input_ids"].to(DEVICE)
-        self.embedding_model.to(DEVICE)
+        
         with torch.no_grad():
             output = self.embedding_model(input_ids=input_ids, 
                                           attention_mask=attention_mask, 
